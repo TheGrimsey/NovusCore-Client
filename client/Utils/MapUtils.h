@@ -78,6 +78,18 @@ namespace Terrain
             return vec2(-pos.y, -pos.x);
         }
 
+        inline vec2 GetPatchPosition(vec2 cellPos, u16 patchID)
+        {
+            u16 y = patchID % 17;
+            bool innerGrid = y >= 9;
+            y -= innerGrid * 9;
+            u16 x = patchID / 17 * 2 + innerGrid;
+
+            f32 patchX = -cellPos.x + x * MAP_PATCH_HALF_SIZE;
+            f32 patchY = -cellPos.y + y * MAP_PATCH_SIZE + (innerGrid * MAP_PATCH_HALF_SIZE);
+            return vec2(patchX, patchY);
+        }
+
         inline void AlignCellBorders(Terrain::Chunk& chunk)
         {
             for (u32 cellID = 0; cellID < Terrain::MAP_CELLS_PER_CHUNK; cellID++)

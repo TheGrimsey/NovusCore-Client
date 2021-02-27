@@ -42,30 +42,22 @@ bool Terrain::Chunk::Read(FileReader& reader, Terrain::Chunk& chunk, StringTable
     u16 chunkMapX = std::stoi(splitName[numberOfSplits - 2]);
     u16 chunkMapY = std::stoi(splitName[numberOfSplits - 1]);
     u32 chunkId = chunkMapX + (chunkMapY * Terrain::MAP_CHUNKS_PER_MAP_STRIDE);
+    vec2 chunkPos = MapUtils::GetChunkPosition(chunkId);
 
     FastNoiseLite noise;
     noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
 
-    DebugHandler::Print("Chunk %d,%d", chunkMapX, chunkMapY);
     for (u16 cellId = 0; cellId < MAP_CELLS_PER_CHUNK; cellId++)
     {
-        vec2 cellPos = MapUtils::GetCellPosition(chunkId, cellId);
-        u16 id = 0;
-        for (u16 y = 0; y < 17; y++)
+        vec2 cellPos = MapUtils::GetCellPosition(chunkPos, cellId);
+        for (u16 id = 0; id < MAP_CELL_TOTAL_GRID_SIZE; id++)
         {
-            bool outerGrid = y % 2 == 0;
-            u16 iterations = outerGrid  ? 9 : 8;
-            f64 patchY = (-static_cast<f64>(cellPos.x) + static_cast<f64>(y) * static_cast<f64>(MAP_PATCH_HALF_SIZE));// +(16 * MAP_PATCH_HALF_SIZE) * chunkMapY;
-            for (u16 x = 0; x < iterations; x++)
-            {
-                f32 patchX = -cellPos.y + (!outerGrid * MAP_PATCH_HALF_SIZE) + (x * MAP_PATCH_SIZE);
+            vec2 patchPos = MapUtils::GetPatchPosition(cellPos, id);
+            patchPos /= 10.f;
 
-                chunk.cells[cellId].heightData[id] = noise.GetNoise(patchX/10.f, (f32)patchY/10.f) * 100.f;
-                id++;
-            }
+            chunk.cells[cellId].heightData[id] = noise.GetNoise(patchPos.x, patchPos.y) * 100.f;
         }
     }
-    DebugHandler::Print("==================================");
     /* PP-NoiseTerrain END */
 
     buffer.Get<u32>(chunk.alphaMapStringID);
