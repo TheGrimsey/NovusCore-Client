@@ -25,6 +25,10 @@
 #include "../Gameplay/Map/Map.h"
 #include "CVar/CVarSystem.h"
 
+/* PP-NoiseTerrain START */
+#include "../Utils/MapUtils.h"
+/* PP-NoiseTerrain END */
+
 namespace fs = std::filesystem;
 
 AutoCVar_Int CVAR_ComplexModelCullingEnabled("complexModels.cullEnable", "enable culling of complex models", 1, CVarFlags::EditCheckbox);
@@ -1063,6 +1067,9 @@ void CModelRenderer::AddInstance(LoadedComplexModel& complexModel, const Terrain
     Instance& instance = _instances.emplace_back();
 
     vec3 pos = placement.position;
+    /* PP-NoiseTerrain Start */
+    pos.z = Terrain::MapUtils::GetHeightFromWorldPosition(pos);
+    /* PP-NoiseTerrain End */
     vec3 rot = glm::radians(placement.rotation);
     vec3 scale = vec3(placement.scale) / 1024.0f;
 

@@ -2,6 +2,10 @@
 
 #include <Utils/ByteBuffer.h>
 #include <Utils/FileReader.h>
+/* PP-NoiseTerrain START */
+#include "../../Utils/MapUtils.h"
+#include "../../dep/FastNoiseLite/FastNoiseLite.h"
+/* PP-NoiseTerrain END */
 
 bool Terrain::Chunk::Read(FileReader& reader, Terrain::Chunk& chunk, StringTable& stringTable)
 {
@@ -31,6 +35,38 @@ bool Terrain::Chunk::Read(FileReader& reader, Terrain::Chunk& chunk, StringTable
     buffer.Get<Terrain::HeightBox>(chunk.heightBox);
 
     buffer.GetBytes(reinterpret_cast<u8*>(&chunk.cells[0]), sizeof(Terrain::Cell) * Terrain::MAP_CELLS_PER_CHUNK);
+
+    /* PP-NoiseTerrain START */
+    std::vector<std::string> splitName = StringUtils::SplitString(reader.FileName(), '_');
+    size_t numberOfSplits = splitName.size();
+    u16 chunkMapX = std::stoi(splitName[numberOfSplits - 2]);
+    u16 chunkMapY = std::stoi(splitName[numberOfSplits - 1]);
+    u32 chunkId = chunkMapX + (chunkMapY * Terrain::MAP_CHUNKS_PER_MAP_STRIDE);
+
+    FastNoiseLite noise;
+    noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+
+    DebugHandler::Print("Chunk %d,%d", chunkMapX, chunkMapY);
+    for (u16 cellId = 0; cellId < MAP_CELLS_PER_CHUNK; cellId++)
+    {
+        vec2 cellPos = MapUtils::GetCellPosition(chunkId, cellId);
+        u16 id = 0;
+        for (u16 y = 0; y < 17; y++)
+        {
+            bool outerGrid = y % 2 == 0;
+            u16 iterations = outerGrid  ? 9 : 8;
+            f64 patchY = (-static_cast<f64>(cellPos.x) + static_cast<f64>(y) * static_cast<f64>(MAP_PATCH_HALF_SIZE));// +(16 * MAP_PATCH_HALF_SIZE) * chunkMapY;
+            for (u16 x = 0; x < iterations; x++)
+            {
+                f32 patchX = -cellPos.y + (!outerGrid * MAP_PATCH_HALF_SIZE) + (x * MAP_PATCH_SIZE);
+
+                chunk.cells[cellId].heightData[id] = noise.GetNoise(patchX/10.f, (f32)patchY/10.f) * 100.f;
+                id++;
+            }
+        }
+    }
+    DebugHandler::Print("==================================");
+    /* PP-NoiseTerrain END */
 
     buffer.Get<u32>(chunk.alphaMapStringID);
 

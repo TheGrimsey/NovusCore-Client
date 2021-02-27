@@ -19,6 +19,10 @@
 #include "../Utils/ServiceLocator.h"
 #include "CVar/CVarSystem.h"
 
+/* PP-NoiseTerrain START */
+#include "../Utils/MapUtils.h"
+/* PP-NoiseTerrain END */
+
 namespace fs = std::filesystem;
 
 
@@ -774,6 +778,9 @@ void MapObjectRenderer::AddInstance(LoadedMapObject& mapObject, const Terrain::P
     InstanceData& instance = _instances.emplace_back();
     
     vec3 pos = placement->position;
+    /* PP-NoiseTerrain Start */
+    pos.z = Terrain::MapUtils::GetHeightFromWorldPosition(pos);
+    /* PP-NoiseTerrain End */
     vec3 rot = glm::radians(placement->rotation);
     mat4x4 rotationMatrix = glm::eulerAngleZYX(rot.z, -rot.y, -rot.x);
 
