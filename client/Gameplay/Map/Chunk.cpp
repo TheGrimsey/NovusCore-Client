@@ -47,15 +47,20 @@ bool Terrain::Chunk::Read(FileReader& reader, Terrain::Chunk& chunk, StringTable
     FastNoiseLite noise;
     noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
 
+    FastNoiseLite noise2(150);
+    noise2.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+
+    FastNoiseLite noise3(4);
+    noise2.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+
     for (u16 cellId = 0; cellId < MAP_CELLS_PER_CHUNK; cellId++)
     {
         vec2 cellPos = MapUtils::GetCellPosition(chunkPos, cellId);
         for (u16 id = 0; id < MAP_CELL_TOTAL_GRID_SIZE; id++)
         {
             vec2 patchPos = MapUtils::GetPatchPosition(cellPos, id);
-            patchPos /= 10.f;
 
-            chunk.cells[cellId].heightData[id] = noise.GetNoise(patchPos.x, patchPos.y) * 100.f;
+            chunk.cells[cellId].heightData[id] = noise.GetNoise(patchPos.x / 10.f, patchPos.y / 10.f) * noise2.GetNoise(patchPos.x / 15.f, patchPos.y / 15.f) * (noise3.GetNoise(patchPos.x / 5.f, patchPos.y / 5.f)*2.f) * 100.f;
         }
     }
     /* PP-NoiseTerrain END */
